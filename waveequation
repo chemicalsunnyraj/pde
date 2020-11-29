@@ -1,0 +1,79 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from gekko import*
+from mpl_toolkits.mplot3d.axes3d import Axes3D
+
+tf = .0005
+npt = 100
+xf = 2*np.pi
+npx = 100
+time = np.linspace(0,tf,npt)
+xpos = np.linspace(0,xf,npx)
+
+m = GEKKO()
+m.time = time
+
+def phi(x):
+    phi = np.cos(x)
+    return phi
+
+def psi(x):
+    psi = np.sin(2*x)
+    return psi
+
+x0 = phi(xpos)
+v0 = psi(xpos)
+dx = xpos[1]-xpos[0]
+a = 18996.06
+c = m.Const(value = a)
+dx = m.Const(value = dx)
+u = [m.Var(value = x0[i]) for i in range(npx)]
+v = [m.Var(value = v0[i]) for i in range(npx)]
+[m.Equation(u[i].dt()==v[i]) for i in range(npx)]
+m.Equation(v[0].dt()==c**2 * \
+           (u[1] - 2.0*u[0] + u[npx-1])/dx**2 )
+[m.Equation(v[i+1].dt()== \
+            c**2 * (u[i+2] - 2.0*u[i+1] + u[i])/dx**2) \
+            for i in range(npx-2) ]
+m.Equation(v[npx-1].dt()== c**2 * \
+           (u[npx-2] - 2.0*u[npx-1] + u[0])/dx**2 )
+m.options.imode = 4
+m.options.solver = 1
+m.options.nodes = 3
+
+m.solve()
+
+# re-arrange results for plotting
+for i in range(npx):
+    if i ==0:
+        ustor = np.array([u[i]])
+        tstor = np.array([m.time])
+    else:
+        ustor = np.vstack([ustor,u[i]])
+        tstor = np.vstack([tstor,m.time])
+for i in range(npt):
+    if i == 0:
+        xstor = xpos
+    else:
+        xstor = np.vstack([xstor,xpos])
+xstor = xstor.T
+t = tstor
+ustor = np.array(ustor)
+
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1,projection='3d')
+ax.set_xlabel('Distance (ft)', fontsize = 12)
+ax.set_ylabel('Time (seconds)', fontsize = 12)
+ax.set_zlabel('Position (ft)', fontsize = 12)
+ax.set_zlim((-1,1))
+p = ax.plot_wireframe(xstor,tstor,ustor,\
+                      rstride=1,cstride=1)
+fig.savefig('wave_3d.png', Transparent=True)
+
+plt.figure()
+plt.contour(xstor, tstor, ustor, 150)
+plt.colorbar()
+plt.xlabel('X')
+plt.ylabel('Time')
+plt.savefig('wave_contour.png', Transparent=True)
+plt.show()
