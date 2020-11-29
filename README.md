@@ -8,3 +8,4 @@ The heat equation in one dimension is a parabolic PDE. The one dimensional trans
 Heated Rod (Left Boundary Condition)
 
 The following simulation is for a heated rod (10 cm) with the left side temperature step to 100 oC. The heat transfers to the right by conduction and away from the rod by convection. The temperature at the tip is the lowest temperature because of heat lost by convection to the surrounding air.
+https://apmonitor.com/do/index.php/Main/PartialDifferentialEquations
